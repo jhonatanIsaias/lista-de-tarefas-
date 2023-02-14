@@ -1,49 +1,33 @@
 const tarefas = document.querySelectorAll('.week');
 const lista = document.querySelectorAll('#lista');
-const indice = [];
+const listaDeTarefas = [];
+let indiceApagar = 0;
+
 criarTarefa = (tarefa, indice) => {
     const botaoConfere = document.createElement('span');
     const li = criarLi();
     li.innerHTML += tarefa.value;
     lista[indice].appendChild(li);
     tarefa.value = '';
-    criarBotaoConfere(li, botaoConfere);
+    criarBotaoConfere(li, botaoConfere, indice);
     li.appendChild(botaoConfere);
-    criarBotaoApagarTarefa(li);
-    salvarTarefa();
-    salvarIndice(indice);
+    criarBotaoApagarTarefa(li, indice);
+    salvarTarefa(li.innerText, indice);
+
 }
-const salvarTarefa = () => {
-    const liTarefas = document.querySelectorAll('li');
-    const listaDeTarefas = [];
-
-
-    for (let tarefa of liTarefas) {
-        let textoTarefa = tarefa.innerText;
-        textoTarefa = String(textoTarefa);
-        listaDeTarefas.push(textoTarefa);
-    }
+const salvarTarefa = (li, indice) => {
+    listaDeTarefas.push({ valor: li, id: indice });
     const tarefasJSON = JSON.stringify(listaDeTarefas);
     localStorage.setItem('tarefas', tarefasJSON);
 
 }
-const salvarIndice = (i) => {
-    i = String(i);
-    indice.push(i);
-
-    const indiceJSON = JSON.stringify(indice);
-    localStorage.setItem('indice', indiceJSON);
-
-}
-
 const adicionarTarefasSalvas = () => {
     const tarefas = localStorage.getItem('tarefas');
-    const indice = localStorage.getItem('indice');
     const listaDeTarefas = JSON.parse(tarefas);
-    const indiceNumerico = JSON.parse(indice);
+
 
     for (let i = 0; i < listaDeTarefas.length; i++) {
-        criarTarefasSalvas(listaDeTarefas[i], Number(indiceNumerico[i]));
+        criarTarefasSalvas(listaDeTarefas[i].valor, listaDeTarefas[i].id);
     }
 }
 const criarTarefasSalvas = (tarefa, indice) => {
@@ -51,13 +35,13 @@ const criarTarefasSalvas = (tarefa, indice) => {
     const li = criarLi();
     li.innerHTML += tarefa;
     lista[indice].appendChild(li);
-    criarBotaoConfere(li, botaoConfere);
+    criarBotaoConfere(li, botaoConfere, indice);
     li.appendChild(botaoConfere);
-    criarBotaoApagarTarefa(li);
-    salvarTarefa();
-    salvarIndice(indice);
+    criarBotaoApagarTarefa(li, indice);
+    salvarTarefa(tarefa, indice);
+
 }
-criarBotaoApagarTarefa = (li) => {
+criarBotaoApagarTarefa = (li, indice) => {
 
     const botaoApagar = document.createElement('span');
     botaoApagar.innerHTML = '<img class="img-apagar" src=".//assets/js/icons8-apagar-para-sempre-24.png" alt=""></img>';
@@ -65,48 +49,46 @@ criarBotaoApagarTarefa = (li) => {
     botaoApagar.addEventListener('click', () => {
 
         const tarefas = localStorage.getItem('tarefas');
-        const indice = localStorage.getItem('indice');
-        const indicesNumerico = JSON.parse(indice);
-        const listaDeTarefas = JSON.parse(tarefas);
-        localStorage.removeItem('indice');
-        for (let i in listaDeTarefas) {
-            if (listaDeTarefas[i] === li.innerText) {
-                let index = indicesNumerico.indexOf(i);
-                indicesNumerico.splice(index, 1);
-                
-                
+        const tarefasArray = JSON.parse(tarefas);
+        localStorage.removeItem('tarefas');
 
+        let texto = String(botaoApagar.parentElement.innerText);
+        tarefasArray.forEach((obj, i) => {
+            if (obj.id === indice && obj.valor === texto) {
+                indiceApagar = i;
             }
-        }
-        const newIndices = JSON.stringify(indicesNumerico);
-        localStorage.setItem('indice', newIndices);
+        });
+        tarefasArray.splice(indiceApagar, 1);
+        listaDeTarefas.splice(indiceApagar, 1);
+
+
+
         botaoApagar.parentElement.remove();
-        salvarTarefa();
-
-
+        const tarefasJSON = JSON.stringify(tarefasArray);
+        localStorage.setItem('tarefas', tarefasJSON);
     });
 }
-criarBotaoConfere = (li, botaoConfere) => {
+criarBotaoConfere = (li, botaoConfere, indice) => {
     botaoConfere.innerHTML = '<input class="confere" type="checkbox">';
     const liAntiga = li.innerText;
     botaoConfere.addEventListener('click', () => {
-        finalizarTarefa(li, liAntiga, botaoConfere);
+        finalizarTarefa(li, liAntiga, botaoConfere, indice);
     });
 }
-const finalizarTarefa = (li, liAntiga, botaoConfere) => {
+const finalizarTarefa = (li, liAntiga, botaoConfere, indice) => {
     li.innerHTML = `<s>${liAntiga}</s>`;
     botaoConfere.innerHTML = '<input class="confere" type="checkbox" checked>';
     li.appendChild(botaoConfere);
-    criarBotaoApagarTarefa(li);
-    reinicializarTarefa(li, liAntiga, botaoConfere);
+    criarBotaoApagarTarefa(li, indice);
+    reinicializarTarefa(li, liAntiga, botaoConfere, indice);
 }
-const reinicializarTarefa = (li, liAntiga, botaoConfere) => {
+const reinicializarTarefa = (li, liAntiga, botaoConfere, indice) => {
     const botaoConfere2 = document.createElement('span');
     botaoConfere.addEventListener('click', () => {
         li.innerHTML = `${liAntiga}`;
         criarBotaoConfere(li, botaoConfere2);
         li.appendChild(botaoConfere2);
-        criarBotaoApagarTarefa(li);
+        criarBotaoApagarTarefa(li, indice);
     });
 }
 const criarLi = () => {
